@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+
 import edu.princeton.cs.algs4.Bag;
 import edu.princeton.cs.algs4.FlowEdge;
 import edu.princeton.cs.algs4.FlowNetwork;
@@ -16,7 +18,7 @@ public class BaseballElimination {
     private final int numOfV; // number of vertices in flow network
 
     private final boolean[] isEliminated;
-    private final Bag<String>[] certificateOfElimination;
+    private final ArrayList<Bag<String>> certificateOfElimination;
 
     // create a baseball division from given filename in format specified below
     public BaseballElimination(String filename) {
@@ -40,12 +42,13 @@ public class BaseballElimination {
             if (line != null) {
                 line = line.trim();
                 String[] items = line.split(" +");
-                teamNames[i] = items[0];
-                w[i] = Integer.parseInt(items[1]);
-                lose[i] = Integer.parseInt(items[2]);
-                r[i] = Integer.parseInt(items[3]);
-                for (int j = 4; j < numOfTeams + 4; j++) {
-                    g[i][j] = Integer.parseInt(items[j]);
+                int index = 0;
+                teamNames[i] = items[index++];
+                w[i] = Integer.parseInt(items[index++]);
+                lose[i] = Integer.parseInt(items[index++]);
+                r[i] = Integer.parseInt(items[index++]);
+                for (int j = 0; j < numOfTeams; j++) {
+                    g[i][j] = Integer.parseInt(items[j + index]);
                 }
             }
         }
@@ -55,7 +58,11 @@ public class BaseballElimination {
         for (int i = 0; i < numOfTeams; i++) {
             isEliminated[i] = false;
         }
-        this.certificateOfElimination = (Bag<String>[]) new Bag[numOfTeams];
+        // initial bag to null
+        this.certificateOfElimination = new ArrayList<Bag<String>>();
+        for (int j = 0; j < numOfTeams; j++) {
+            certificateOfElimination.add(null);
+        }
         // run alg to calculate isEliminated and certificateOfElimination
         int maxWinIndex = calMaxWin();
 
@@ -65,7 +72,7 @@ public class BaseballElimination {
                 isEliminated[x] = true;
                 Bag<String> bag = new Bag<>();
                 bag.add(teamNames[maxWinIndex]);
-                certificateOfElimination[x] = bag;
+                certificateOfElimination.set(x, bag);
             } else {
                 // Nontrivial elimination
                 FlowNetwork fn = constructFN(x);
@@ -77,12 +84,12 @@ public class BaseballElimination {
                         // team x could be eliminated
                         isEliminated[x] = true;
                         String team = teamNames[k];
-                        if (certificateOfElimination[x] == null) {
+                        if (certificateOfElimination.get(x) == null) {
                             Bag<String> bag = new Bag<>();
                             bag.add(team);
-                            certificateOfElimination[x] = bag;
+                            certificateOfElimination.set(x, bag);
                         } else {
-                            certificateOfElimination[x].add(team);
+                            certificateOfElimination.get(x).add(team);
                         }
                     }
                 }
@@ -143,7 +150,7 @@ public class BaseballElimination {
     // subset R of teams that eliminates given team; null if not eliminated
     public Iterable<String> certificateOfElimination(String team) {
         validateTeam(team);
-        return certificateOfElimination[indexOf(team)];
+        return certificateOfElimination.get(indexOf(team));
     }
 
     // helper functions
